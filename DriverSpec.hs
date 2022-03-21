@@ -43,7 +43,7 @@ main = hspec $ do
                 startingKnowledge = initial [irrelevant, irrelevant]
                 allTwoGossips = S.fromList [firstDriver, secondDriver]
                 completeKnowledge = M.fromList [(firstDriver,allTwoGossips),(secondDriver,allTwoGossips)]
-            shareGossip startingKnowledge firstDriver secondDriver `shouldBe` completeKnowledge
+            shareGossip startingKnowledge [firstDriver,secondDriver] `shouldBe` completeKnowledge
     describe "The drivers who share gossip at a given moment" $ do
         it "for instance at the first stop, when there are two drivers sharing a stop, are just these two" $ do
             head (gatheredDrivers [[4],[4]]) `shouldBe` [[0,1]]
@@ -68,10 +68,11 @@ complete :: Knowledge -> Bool
 complete knowledge = all (allGossips ==) $ M.elems knowledge
     where allGossips = S.fromList $ M.keys knowledge
 
-shareGossip :: Knowledge -> Driver -> Driver -> Knowledge
-shareGossip k d1 d2 = M.insert d1 sharedGossip $ M.insert d2 sharedGossip k 
+shareGossip :: Knowledge -> [Driver] -> Knowledge
+shareGossip k [d1,d2] = M.insert d1 sharedGossip $ M.insert d2 sharedGossip k 
     where allTwoGossips = S.fromList [d1, d2]
           Just sharedGossip = S.union <$> M.lookup d1 k <*> M.lookup d2 k
+shareGossip k _ = undefined
 
 gatheredDrivers :: Routes -> [[Gathering]]
 gatheredDrivers routes = map gatherings $ transpose routes
