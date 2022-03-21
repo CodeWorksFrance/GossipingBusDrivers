@@ -17,6 +17,10 @@ main = hspec $ do
             gossip [[1]] `shouldBe` Just 0
         it "should be one when two drivers meet at the same first stop" $
             gossip [[1],[1]] `shouldBe` Just 1
+        it "should be two when two drivers meet at one's second stop" $
+            gossip [[1],[2,1]] `shouldBe` Just 2
+        it "should be the lcm of the length of prime routes" $
+            gossip [[1,2,3],[11,12,13,14,3]] `shouldBe` Just 15
         it "should be never when two drivers have no common stop" $
             gossip [[1],[2]] `shouldBe` Nothing
     describe "The initial state of knowledge of drivers" $ do
@@ -77,16 +81,16 @@ shareAllGossip k [] = k
 shareAllGossip k gs = foldl shareGossip k gs
 
 shareGossip :: Knowledge -> Gathering -> Knowledge
-shareGossip k [d1,d2] = M.insert d1 sharedGossip $ M.insert d2 sharedGossip k 
+shareGossip k [d1,d2] = M.insert d1 sharedGossip $ M.insert d2 sharedGossip k
     where allTwoGossips = S.fromList [d1, d2]
           Just sharedGossip = S.union <$> M.lookup d1 k <*> M.lookup d2 k
 shareGossip k _ = undefined
 
 gatheredDrivers :: Routes -> [[Gathering]]
-gatheredDrivers routes = map gatherings $ transpose routes
+gatheredDrivers routes = map gatherings $ transpose $ map (take 480 . cycle) routes
 
 gatherings :: [Station] -> [[Driver]]
-gatherings stations = filter (\l -> length l >= 2) $ map (\e -> elemIndices e stations) $ nub stations
+gatherings stations = filter (\l -> length l >= 2) $ map (`elemIndices` stations) $ nub stations
 
 -- Where are we going ?
 -- - evolve the state of knowledge
