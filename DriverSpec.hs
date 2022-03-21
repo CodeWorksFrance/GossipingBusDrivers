@@ -48,6 +48,9 @@ main = hspec $ do
             head (gatheredDrivers [[4],[4]]) `shouldBe` [[0,1]]
         it "for instance at the first stop, when two drivers don't share a stop, is the empty list" $ do
             head (gatheredDrivers [[7],[2]]) `shouldBe` []
+    describe "Gatherings of drivers, given what stops they have reached" $ do
+        it "should only occur if two or more drivers are at the same stop" $ do
+            gatherings [1,2,3] `shouldBe` []
 
 gossip :: Routes -> Solution
 gossip routes | complete (initial routes) = 0
@@ -68,6 +71,9 @@ shareGossip k d1 d2 = M.insert d1 sharedGossip $ M.insert d2 sharedGossip k
 gatheredDrivers :: Routes -> [[Gathering]]
 gatheredDrivers routes | routes == [[4],[4]] = repeat [[0,1]]
                        | otherwise = repeat []
+
+gatherings :: [Station] -> [Driver]
+gatherings = const []
 
 -- Where are we going ?
 -- - evolve the state of knowledge
