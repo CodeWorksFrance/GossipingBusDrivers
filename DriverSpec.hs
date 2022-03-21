@@ -1,7 +1,7 @@
 import Test.Hspec
 import qualified Data.Map as M
 import qualified Data.Set as S
-import Data.List (elemIndices, nub)
+import Data.List (elemIndices, nub, transpose)
 
 type Routes = [Route]
 type Route = [Station]
@@ -74,8 +74,7 @@ shareGossip k d1 d2 = M.insert d1 sharedGossip $ M.insert d2 sharedGossip k
           Just sharedGossip = S.union <$> M.lookup d1 k <*> M.lookup d2 k
 
 gatheredDrivers :: Routes -> [[Gathering]]
-gatheredDrivers routes | routes == [[4],[4]] = repeat [[0,1]]
-                       | otherwise = repeat []
+gatheredDrivers routes = map gatherings $ transpose routes
 
 gatherings :: [Station] -> [[Driver]]
 gatherings stations = filter (\l -> length l >= 2) $ map (\e -> elemIndices e stations) $ nub stations
