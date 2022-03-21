@@ -6,7 +6,7 @@ import Data.List (elemIndices, nub, transpose)
 type Routes = [Route]
 type Route = [Station]
 type Station = Int
-type Solution = Int
+type Solution = Maybe Int
 type Driver = Int
 type Gathering = [Driver]
 type Knowledge = M.Map Driver (S.Set Driver)
@@ -14,9 +14,11 @@ type Knowledge = M.Map Driver (S.Set Driver)
 main = hspec $ do
     describe "The number of stops it takes for all drivers to be up to date" $ do
         it "should be no stops at all when only one driver is present" $
-            gossip [[1]] `shouldBe` 0
+            gossip [[1]] `shouldBe` Just 0
         it "should be one when two drivers meet at the same first stop" $
-            gossip [[1],[1]] `shouldBe` 1
+            gossip [[1],[1]] `shouldBe` Just 1
+        it "should be never when two drivers have no common stop" $
+            gossip [[1],[2]] `shouldBe` Nothing
     describe "The initial state of knowledge of drivers" $ do
         it "should assign, to a lone driver, only their own gossip" $ do
             let firstDriver = 0
@@ -58,8 +60,10 @@ main = hspec $ do
             gatherings [1,1,3,3] `shouldBe` [[0,1],[2,3]]
 
 gossip :: Routes -> Solution
-gossip routes | complete (initial routes) = 0
-              | otherwise = 1
+gossip routes | not $ any complete knowledgeStates = Nothing
+              | otherwise = Just $ length $ takeWhile (not.complete) knowledgeStates
+    where knowledgeStates = scanl shareAllGossip (initial routes) gathered
+          gathered = gatheredDrivers routes
 
 initial :: Routes -> Knowledge
 initial routes = M.fromList [(driver, S.fromList [driver]) | driver <- [0..length routes-1]]
@@ -68,7 +72,11 @@ complete :: Knowledge -> Bool
 complete knowledge = all (allGossips ==) $ M.elems knowledge
     where allGossips = S.fromList $ M.keys knowledge
 
-shareGossip :: Knowledge -> [Driver] -> Knowledge
+shareAllGossip :: Knowledge -> [Gathering] -> Knowledge
+shareAllGossip k [] = k
+shareAllGossip k gs = foldl shareGossip k gs
+
+shareGossip :: Knowledge -> Gathering -> Knowledge
 shareGossip k [d1,d2] = M.insert d1 sharedGossip $ M.insert d2 sharedGossip k 
     where allTwoGossips = S.fromList [d1, d2]
           Just sharedGossip = S.union <$> M.lookup d1 k <*> M.lookup d2 k
