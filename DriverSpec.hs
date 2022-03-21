@@ -1,6 +1,7 @@
 import Test.Hspec
 import qualified Data.Map as M
 import qualified Data.Set as S
+import Data.List (elemIndices, nub)
 
 type Routes = [Route]
 type Route = [Station]
@@ -51,6 +52,10 @@ main = hspec $ do
     describe "Gatherings of drivers, given what stops they have reached" $ do
         it "should only occur if two or more drivers are at the same stop" $ do
             gatherings [1,2,3] `shouldBe` []
+        it "should collect drivers at the same stop" $ do
+            gatherings [1,1,3] `shouldBe` [[0,1]]
+        it "should collect several gatherings if there are such" $ do
+            gatherings [1,1,3,3] `shouldBe` [[0,1],[2,3]]
 
 gossip :: Routes -> Solution
 gossip routes | complete (initial routes) = 0
@@ -72,8 +77,8 @@ gatheredDrivers :: Routes -> [[Gathering]]
 gatheredDrivers routes | routes == [[4],[4]] = repeat [[0,1]]
                        | otherwise = repeat []
 
-gatherings :: [Station] -> [Driver]
-gatherings = const []
+gatherings :: [Station] -> [[Driver]]
+gatherings stations = filter (\l -> length l >= 2) $ map (\e -> elemIndices e stations) $ nub stations
 
 -- Where are we going ?
 -- - evolve the state of knowledge
